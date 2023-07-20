@@ -31,28 +31,28 @@ const sketch = ({ context, canvas, width, height }) => {
   // document.body.appendChild(stats.dom);
   // const gui = new GUI();
 
-
   const options = {
     enableSwoopingCamera: false,
     enableRotation: false,
-    color: 0xffbc54,
-    metalness: 0.63,
-    roughness: 0.05,
+    color: 0xffffff,
+    metalness: 0,
+    roughness: 0.21,
     transmission: 1,
-    ior: 3.3,
+    ior: 2.5,
     reflectivity: 1,
     thickness: 5,
-    envMapIntensity: 1.2,
+    envMapIntensity: 1.5,
     clearcoat: 0,
-    clearcoatRoughness: 3,
+    clearcoatRoughness: 0,
     normalScale: 5,
     clearcoatNormalScale: 5,
-    normalRepeat: 1,
+    normalRepeat: 5,
+    // attenuationTint: 0xfffff,
+    // attenuationDistance: 0,
     bloomThreshold: 0.85,
     bloomStrength: 0.35,
     bloomRadius: 0.33,
   };
-
   // Setup
   // -----
 
@@ -63,18 +63,17 @@ const sketch = ({ context, canvas, width, height }) => {
   renderer.setClearColor(0x000000, 1);
 
   const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 0, 35);
+  camera.position.set(0, 0, 23);
 
   const controls = new THREE.OrbitControls(camera, canvas);
   controls.enabled = !options.enableSwoopingCamera;
   controls.autoRotate = true;
-  controls.autoRotateSpeed = 9;
+  controls.autoRotateSpeed = 8;
   controls.enableDamping = true;
   controls.dampingFactor = 1.25;
   controls.enableZoom = true;
-  controls.minDistance = 10;
-  controls.maxDistance = 60;
-  controls.enablePan = false;
+  controls.minDistance = 5;
+  controls.maxDistance = 50;
   const scene = new THREE.Scene();
 
   const renderPass = new THREE.RenderPass(scene, camera);
@@ -95,19 +94,19 @@ const sketch = ({ context, canvas, width, height }) => {
   const textureLoader = new THREE.TextureLoader();
 
   const hdrEquirect = new THREE.RGBELoader().load(
-    "src/reflection.hdr",
+    "src/hdr.hdr",
     () => {
       hdrEquirect.mapping = THREE.EquirectangularReflectionMapping;
     }
   );
 
-  const normalMapTexture = textureLoader.load("src/Black_Normal.jpg");
+  const normalMapTexture = textureLoader.load("src/normal.jpg");
   normalMapTexture.wrapS = THREE.RepeatWrapping;
   normalMapTexture.wrapT = THREE.RepeatWrapping;
   normalMapTexture.repeat.set(options.normalRepeat, options.normalRepeat);
 
   const material = new THREE.MeshPhysicalMaterial({
-    color: 0xa0a0a0,
+    color: 0xff9494,
     metalness: options.metalness,
     roughness: options.roughness,
     transmission: options.transmission,
@@ -129,11 +128,11 @@ const sketch = ({ context, canvas, width, height }) => {
   let mesh = null;
 
   // Load dragon GLTF model
-  new THREE.GLTFLoader().load("src/black.glb", (gltf) => {
+  new THREE.GLTFLoader().load("src/model1.glb", (gltf) => {
     const dragon = gltf.scene.children.find((mesh) => mesh.name === "dragon");
     const geometry = dragon.geometry.clone();
     mesh = new THREE.Mesh(geometry, material);
-    mesh.scale.set(0.25, 0.25, 0.25);
+    mesh.scale.set(0.35, 0.35, 0.35);
     scene.add(mesh);
     // Discard the loaded model
     gltf.scene.children.forEach((child) => {
@@ -141,27 +140,26 @@ const sketch = ({ context, canvas, width, height }) => {
       child.material.dispose();
     });
   });
-
   //Load GLTF model from the local directory
   const loader = new THREE.GLTFLoader();
-  loader.load('/src/black.glb', function(gltf) {
+  loader.load('/src/model.glb', function (gltf) {
     const model = gltf.scene;
-    model.scale.set(0.245, 0.245, 0.245);
-
+    model.scale.set(0.34, 0.34, 0.34);
+  
     // Change emissive material to MeshPhysicalMaterial
     model.traverse((child) => {
       if (child.isMesh) {
         const material = new THREE.MeshPhysicalMaterial({
-          color: 0xd23e3e,
-          metalness: 0.7,
+          color: 0xffffff,
+          metalness: 0.75,
           roughness: 0,
           opacity: 0.1,
           envMap: hdrEquirect,
           envMapIntensity: options.envMapIntensity,
-          ior: 2.5,
+          ior: 1.5,
           reflectivity: 0.5,
           thickness: 2.5,
-          envMapIntensity: 2.5,
+          envMapIntensity: 1.5,
         });
         child.material = material;
       }
@@ -169,26 +167,12 @@ const sketch = ({ context, canvas, width, height }) => {
     scene.add(model);
   });
 
-  //Load GLTF model from the local directory
-  loader.load('/src/gs.glb', function(gltf) {
-    const model = gltf.scene;
-    model.scale.set(0.251, 0.251, 0.251);
-    model.traverse((child) => {
-      if (child.isMesh) {
-        const material = new THREE.MeshStandardMaterial({
-          color: 0xa0a0a0,
-          metalness: 0.6,
-          roughness: 0.6,
-          envMap: hdrEquirect, // Set the HDR environment map
-          envMapIntensity: 1, // Adjust the intensity of the environment map
-        });
-        child.material = material;
-      }
-    });
-    scene.add(model);
-  });
+  const rectLight1 = new THREE.RectAreaLight(0xffffff, 5, 30, 30);
+rectLight1.position.set(1, 0, 1);
+rectLight1.lookAt(0, 0, 0);
+scene.add(rectLight1);
 
-  // GUI
+   // GUI
 
   /** gui.add(options, "enableSwoopingCamera").onChange((val) => {
     controls.enabled = !val;
@@ -268,7 +252,7 @@ const sketch = ({ context, canvas, width, height }) => {
   postprocessing.add(options, "bloomRadius", 0, 1, 0.01).onChange((val) => {
     bloomPass.radius = val;
   });
-  **/
+  **/ 
   // Update
   // ------
   const update = (time, deltaTime) => {
@@ -280,7 +264,7 @@ const sketch = ({ context, canvas, width, height }) => {
     }
   };
 
-  // Lifecycle
+    // Lifecycle
   // ---------
 
   return {
