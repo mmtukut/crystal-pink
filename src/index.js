@@ -167,12 +167,6 @@ const sketch = ({ context, canvas, width, height }) => {
     });
     scene.add(model);
   });
-
-  const rectLight1 = new THREE.RectAreaLight(0xffffff, 5, 30, 30);
-rectLight1.position.set(1, 0, 1);
-rectLight1.lookAt(0, 0, 0);
-scene.add(rectLight1);
-
    // GUI
 
   /** gui.add(options, "enableSwoopingCamera").onChange((val) => {
