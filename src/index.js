@@ -17,8 +17,8 @@ require("three/examples/js/postprocessing/UnrealBloomPass.js");
 require("three/examples/js/shaders/LuminosityHighPassShader.js");
 require("three/examples/js/shaders/CopyShader.js");
 
-const Stats = require("stats-js");
-const { GUI } = require("dat.gui");
+// const Stats = require("stats-js");
+// const { GUI } = require("dat.gui");
 
 const settings = {
   animate: true,
@@ -27,9 +27,9 @@ const settings = {
 };
 
 const sketch = ({ context, canvas, width, height }) => {
-  const stats = new Stats();
-  document.body.appendChild(stats.dom);
-  const gui = new GUI();
+  // const stats = new Stats();
+  // document.body.appendChild(stats.dom);
+  // const gui = new GUI();
 
   const options = {
     enableSwoopingCamera: false,
@@ -63,17 +63,18 @@ const sketch = ({ context, canvas, width, height }) => {
   renderer.setClearColor(0x000000, 1);
 
   const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 0, 23);
+  camera.position.set(0, 0, 35);
 
   const controls = new THREE.OrbitControls(camera, canvas);
   controls.enabled = !options.enableSwoopingCamera;
   controls.autoRotate = true;
-  controls.autoRotateSpeed = 8;
+  controls.autoRotateSpeed = 9;
   controls.enableDamping = true;
   controls.dampingFactor = 1.25;
   controls.enableZoom = true;
-  controls.minDistance = 5;
-  controls.maxDistance = 50;
+  controls.minDistance = 10;
+  controls.maxDistance = 60;
+  controls.enablePan = false;
   const scene = new THREE.Scene();
 
   const renderPass = new THREE.RenderPass(scene, camera);
@@ -87,7 +88,7 @@ const sketch = ({ context, canvas, width, height }) => {
   const composer = new THREE.EffectComposer(renderer);
   composer.addPass(renderPass);
   composer.addPass(bloomPass);
-
+  
   // Content
   // -------
 
@@ -172,10 +173,9 @@ rectLight1.position.set(1, 0, 1);
 rectLight1.lookAt(0, 0, 0);
 scene.add(rectLight1);
 
-  // GUI
-  // ---
+   // GUI
 
-  gui.add(options, "enableSwoopingCamera").onChange((val) => {
+  /** gui.add(options, "enableSwoopingCamera").onChange((val) => {
     controls.enabled = !val;
     controls.reset();
   });
@@ -240,7 +240,6 @@ scene.add(rectLight1);
   //   material.attenuationDistance = val;
   // });
 
-
   const postprocessing = gui.addFolder("Post Processing");
 
   postprocessing.add(options, "bloomThreshold", 0, 1, 0.01).onChange((val) => {
@@ -254,23 +253,19 @@ scene.add(rectLight1);
   postprocessing.add(options, "bloomRadius", 0, 1, 0.01).onChange((val) => {
     bloomPass.radius = val;
   });
-
+  **/ 
   // Update
   // ------
-
   const update = (time, deltaTime) => {
-
-
     if (options.enableSwoopingCamera) {
       camera.position.x = Math.sin((time / 10) * Math.PI * 2) * 2;
       camera.position.y = Math.cos((time / 10) * Math.PI * 2) * 2;
       camera.position.z = 4;
       camera.lookAt(scene.position);
-      
     }
   };
 
-  // Lifecycle
+    // Lifecycle
   // ---------
 
   return {
@@ -294,12 +289,11 @@ scene.add(rectLight1);
       camera.updateProjectionMatrix();
     },
     render({ time, deltaTime }) {
-      stats.begin();
+      // stats.begin();
       controls.update();
       update(time, deltaTime);
-      // renderer.render(scene, camera);
       composer.render();
-      stats.end();
+      // stats.end();
     },
     unload() {
       mesh.geometry.dispose();
@@ -308,8 +302,8 @@ scene.add(rectLight1);
       controls.dispose();
       renderer.dispose();
       bloomPass.dispose();
-      gui.destroy();
-      document.body.removeChild(stats.dom);
+      // gui.destroy();
+      // document.body.removeChild(stats.dom);
     },
   };
 };
